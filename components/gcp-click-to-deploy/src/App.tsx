@@ -91,6 +91,10 @@ class App extends React.Component<any, { signedIn: boolean }> {
     });
   }
 
+  public componentDidMount() {
+    // parse and extract the query param if any, and feed it down to DeployForm in render func
+  }
+
   public render() {
     return (
       <MuiThemeProvider theme={theme}>

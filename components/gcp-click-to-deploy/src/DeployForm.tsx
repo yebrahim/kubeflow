@@ -99,6 +99,8 @@ export default class DeployForm extends React.Component<any, DeployFormState> {
 
   private _configSpec: any;
 
+  private _kfVersionList = ['v1', 'v2', 'v3', 'v4'];
+
   constructor(props: any) {
     super(props);
     this.state = {
@@ -108,7 +110,7 @@ export default class DeployForm extends React.Component<any, DeployFormState> {
       dialogBody: '',
       dialogTitle: '',
       iap: true,
-      kfversion: 'v0.3.5',
+      kfversion: '',
       project: '',
       showLogs: false,
       zone: 'us-central1-a',
@@ -120,6 +122,13 @@ export default class DeployForm extends React.Component<any, DeployFormState> {
     // TODO(jlewi): The fetches should happen asynchronously. The user shouldn't
     // be able to click submit until the fetches have succeeded. How can we do
     // that?
+
+    if (this.props.nightlyVersion) {
+      this._kfVersionList.push(this.props.nightlyVersion);
+      this.setState({
+        kfversion: this._kfVersionList[this._kfVersionList.length - 1],
+      });
+    }
 
     fetch(appConfigPath, { mode: 'no-cors' })
       .then((response) => {
@@ -156,7 +165,7 @@ export default class DeployForm extends React.Component<any, DeployFormState> {
         </div>
         <div style={styles.row}>
           <TextField label="Deployment name" spellCheck={false} style={styles.input} variant="filled"
-           required={true} value={this.state.deploymentName} onChange={this._handleChange('deploymentName')} />
+            required={true} value={this.state.deploymentName} onChange={this._handleChange('deploymentName')} />
         </div>
         <div style={styles.row}>
           <FormControlLabel label="Skip IAP" control={
@@ -168,11 +177,11 @@ export default class DeployForm extends React.Component<any, DeployFormState> {
         <Collapse in={this.state.iap}>
           <div style={styles.row}>
             <TextField label="IAP OAuth client ID" spellCheck={false} style={styles.input} variant="filled"
-             required={true} value={this.state.clientId} onChange={this._handleChange('clientId')} />
+              required={true} value={this.state.clientId} onChange={this._handleChange('clientId')} />
           </div>
           <div style={styles.row}>
             <TextField label="IAP OAuth client secret" spellCheck={false} style={styles.input} variant="filled"
-             required={true} value={this.state.clientSecret} onChange={this._handleChange('clientSecret')} />
+              required={true} value={this.state.clientSecret} onChange={this._handleChange('clientSecret')} />
           </div>
         </Collapse>
 
@@ -188,7 +197,7 @@ export default class DeployForm extends React.Component<any, DeployFormState> {
         <div style={styles.row}>
           <TextField select={true} label="Kubeflow version:" required={true} style={styles.input} variant="filled"
             value={this.state.kfversion} onChange={this._handleChange('kfversion')}>
-            { process.env.REACT_APP_VERSIONS ?
+            {process.env.REACT_APP_VERSIONS ?
               process.env.REACT_APP_VERSIONS.split(',').map((version, i) => (
                 <MenuItem key={i} value={version}>{version}</MenuItem>
               )) :
@@ -353,7 +362,7 @@ export default class DeployForm extends React.Component<any, DeployFormState> {
       });
       return;
     }
-    const cloudShellUrl = 'https://console.cloud.google.com/kubernetes/service/' +  this.state.zone + '/' +
+    const cloudShellUrl = 'https://console.cloud.google.com/kubernetes/service/' + this.state.zone + '/' +
       this.state.deploymentName + '/kubeflow/ambassador?project=' + this.state.project + '&tab=overview';
     window.open(cloudShellUrl, '_blank');
   }
@@ -456,8 +465,8 @@ export default class DeployForm extends React.Component<any, DeployFormState> {
     this._appendLine('Proceeding with project number: ' + projectNumber);
 
     const deploymentName = this.state.deploymentName;
-    const accountId =  'kubeflow-deploy-admin';
-    const saEmail = accountId + '@' + project +'.iam.gserviceaccount.com';
+    const accountId = 'kubeflow-deploy-admin';
+    const saEmail = accountId + '@' + project + '.iam.gserviceaccount.com';
     let saUniqueId = await Gapi.iam.getServiceAccountId(project, saEmail);
     if (saUniqueId === null) {
       saUniqueId = await Gapi.iam.createServiceAccount(project, accountId)
